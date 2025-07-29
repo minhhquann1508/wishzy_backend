@@ -5,7 +5,7 @@ import User from '../models/user.model';
 import { CustomError } from '../errors/error';
 import { Request, Response } from 'express';
 import { CONST } from '../utils/constant';
-import { CustomRequest } from '../../types/request';
+import { CustomRequest } from '../types/request';
 
 interface QueriesType {
   fullName?: { $regex: string; $options: string };

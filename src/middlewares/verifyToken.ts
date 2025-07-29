@@ -2,7 +2,7 @@ import { NextFunction, Response } from 'express';
 import http from 'http-status-codes';
 import jwt from 'jsonwebtoken';
 
-import { CustomRequest, PayloadData } from '../../types/request';
+import { CustomRequest, PayloadData } from '../types/request';
 import { CustomError } from '../errors/error';
 import asyncHandler from 'express-async-handler';
 import config from '../configs/config';
