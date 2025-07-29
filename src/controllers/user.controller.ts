@@ -1,9 +1,9 @@
 import http from 'http-status-codes';
+import { Request, Response } from 'express';
 import asyncHandler from 'express-async-handler';
 
 import User from '../models/user.model';
 import { CustomError } from '../errors/error';
-import { Request, Response } from 'express';
 import { CONST } from '../utils/constant';
 import { CustomRequest } from '../types/request';
 
