@@ -1,12 +1,15 @@
 import { Request, Response } from 'express';
 import asyncHandler from 'express-async-handler';
 import http from 'http-status-codes';
+import crypto from 'crypto';
 
 import { CustomError } from '../errors/error';
 import { comparePassword } from '../utils/helper';
 import { generateAccessToken, generateRefreshToken } from '../utils/token';
 
 import User from '../models/user.model';
+import { sendEmail } from '../utils/sendEmail';
+import { verifyRefreshToken } from '../middlewares/verifyToken';
 
 export const register = asyncHandler(async (req: Request, res: Response) => {
   const { fullName, email, password } = req.body;
@@ -65,3 +68,55 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
     },
   });
 });
+
+export const logout = asyncHandler(async (req: Request, res: Response) => {
+  res.clearCookie('refreshToken', {
+    httpOnly: true,
+    secure: false,
+    sameSite: 'strict',
+  });
+
+  res.status(http.NO_CONTENT).json({ msg: 'Đăng xuất thành công' });
+});
+
+export const refreshToken = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { refreshToken } = req.cookies;
+    if (!refreshToken)
+      throw new CustomError(http.UNAUTHORIZED, 'Hết phiên đăng nhập');
+
+    const isTokenValid = await verifyRefreshToken(refreshToken);
+    if (!isTokenValid)
+      throw new CustomError(http.UNAUTHORIZED, 'Hết phiên đăng nhập');
+
+    const accessToken = generateAccessToken(isTokenValid);
+
+    res.status(http.OK).json({ msg: 'Lấy token mới thành công', accessToken });
+  },
+);
+
+export const forgotPassword = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { email } = req.body;
+    if (!email) throw new CustomError(http.BAD_REQUEST, 'Không tìm thấy email');
+
+    const user = await User.findOne({ email });
+    if (!user)
+      throw new CustomError(http.BAD_REQUEST, 'Không tìm thấy tài khoản');
+
+    const resetPasswordExp = new Date(Date.now() + 15 * 60 * 1000); // Thời hạn 15p
+
+    user.resetPasswordToken = crypto.randomBytes(32).toString('hex');
+    user.resetPasswordExp = resetPasswordExp;
+    await user.save();
+
+    const resetLink = '';
+    const html = `<a href="${resetLink}">Cập nhật lại mật khẩu</a>`;
+
+    const isSendEmail = await sendEmail(user.email, 'Cập nhật mật khẩu', html);
+    if (!isSendEmail)
+      throw new CustomError(http.BAD_REQUEST, 'Gửi mail không thành công');
+
+    res.status(http.OK).json({ msg: 'Email lấy lại mật khẩu đã được gửi.' });
+  },
+);

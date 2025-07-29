@@ -18,3 +18,14 @@ export const verifyToken = asyncHandler(
     next();
   },
 );
+
+export const verifyRefreshToken = async (token: string) => {
+  try {
+    jwt.verify(token, config.jwtSecret, (err, decode) => {
+      if (err) return null;
+      return decode as PayloadData;
+    });
+  } catch (error) {
+    return null;
+  }
+};
