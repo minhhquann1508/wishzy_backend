@@ -3,7 +3,7 @@ import config from '../configs/config';
 
 type Data = {
   id: string;
-  role: 'user' | 'admin' | 'intructor';
+  role: 'user' | 'admin' | 'instructor';
 };
 
 export const generateAccessToken = (data: Data) => {

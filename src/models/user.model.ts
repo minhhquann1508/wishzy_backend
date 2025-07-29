@@ -23,8 +23,12 @@ const UserSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ['user', 'admin', 'intructor'],
+      enum: ['user', 'admin', 'instructor'],
       default: 'user',
+    },
+    isInstructorActive: {
+      type: Boolean,
+      default: false,
     },
     resetPasswordToken: String,
     resetPasswordExp: Date,
