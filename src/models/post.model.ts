@@ -8,7 +8,10 @@ const PostSchema = new mongoose.Schema(
       required: true,
     },
     thumbnail: String,
-    content: String,
+    content: {
+      type: String,
+      required: true,
+    },
     category: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'PostCategory',
@@ -42,9 +45,10 @@ const PostSchema = new mongoose.Schema(
 
 PostSchema.pre('save', async function () {
   if (!this.isModified('title')) return;
-  this.title = slugify(this.title, {
+  this.slug = slugify(this.title, {
     replacement: '-',
     lower: true,
+    strict: true,
   });
 });
 

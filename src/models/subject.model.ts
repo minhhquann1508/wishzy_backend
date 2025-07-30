@@ -1,9 +1,9 @@
 import mongoose from 'mongoose';
 import slugify from 'slugify';
 
-const PostCategorySchema = new mongoose.Schema(
+const SubjectSchema = new mongoose.Schema(
   {
-    categoryName: {
+    subjectName: {
       type: String,
       required: true,
       unique: true,
@@ -12,9 +12,9 @@ const PostCategorySchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
-    createdBy: {
+    grade: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
+      ref: 'Grade',
       required: true,
     },
     slug: String,
@@ -22,15 +22,15 @@ const PostCategorySchema = new mongoose.Schema(
   { timestamps: true },
 );
 
-PostCategorySchema.pre('save', async function () {
-  if (!this.isModified('categoryName')) return;
-  this.slug = slugify(this.categoryName, {
+SubjectSchema.pre('save', async function () {
+  if (!this.isModified('subjectName')) return;
+  this.slug = slugify(this.subjectName, {
     replacement: '-',
     lower: true,
     strict: true,
   });
 });
 
-const PostCategory = mongoose.model('PostCategory', PostCategorySchema);
+const Subject = mongoose.model('Subject', SubjectSchema);
 
-export default PostCategory;
+export default Subject;
