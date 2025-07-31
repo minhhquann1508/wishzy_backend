@@ -21,10 +21,11 @@ export const errorHandler = (
 ) => {
   if (err instanceof CustomError) {
     res.status(Number(err.statusCode)).json({ msg: err.message });
+  } else if (err) {
   } else {
     console.error(err);
     res.status(http.INTERNAL_SERVER_ERROR).json({
-      msg: err.message || 'Lỗi phía server',
+      msg: err || 'Lỗi phía server',
     });
   }
 };
