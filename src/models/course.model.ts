@@ -79,11 +79,21 @@ const CourseSchema = new mongoose.Schema(
 
 CourseSchema.pre('save', async function () {
   if (this.isModified('courseName')) {
-    this.slug = slugify(this.courseName, {
+    const baseSlug = slugify(this.courseName, {
       replacement: '-',
       lower: true,
       strict: true,
     });
+
+    let slug = baseSlug;
+    let count = 1;
+
+    while (await Course.exists({ slug, _id: { $ne: this._id } })) {
+      slug = `${baseSlug}-${count}`;
+      count++;
+    }
+
+    this.slug = slug;
   }
 
   if (
