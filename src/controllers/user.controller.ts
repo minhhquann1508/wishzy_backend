@@ -108,27 +108,27 @@ export const updateUserData = asyncHandler(
 // ======================= REQUEST 
 // gửi lên yêu cầu
 export const requestInstructor = asyncHandler(
-  async (req: Request, res: Response) => {
-    const { userId } = req.body;
-    if (!userId) {
-      throw new CustomError(http.BAD_REQUEST, 'Thiếu ID người dùng');
+  async (req: CustomRequest, res: Response) => {
+    const { user } = req;
+    if (!user?.id) {
+      throw new CustomError(http.UNAUTHORIZED, 'Không có thông tin người dùng');
     }
 
-    const user = await User.findById(userId);
-    if (!user) {
+    const foundUser = await User.findById(user.id);
+    if (!foundUser) {
       throw new CustomError(http.NOT_FOUND, 'Không tìm thấy người dùng');
     }
 
-    if (user.role === 'instructor') {
+    if (foundUser.role === 'instructor') {
       throw new CustomError(http.BAD_REQUEST, 'Bạn đã là giảng viên');
     }
 
-    if (user.isInstructorActive) {
+    if (foundUser.isInstructorActive) {
       throw new CustomError(http.BAD_REQUEST, 'Yêu cầu của bạn đang chờ xét duyệt');
     }
 
-    user.isInstructorActive = false;
-    await user.save();
+    foundUser.isInstructorActive = true;
+    await foundUser.save();
 
     res.status(http.OK).json({
       msg: 'Yêu cầu làm giảng viên đã được gửi thành công',
@@ -152,36 +152,26 @@ export const approveInstructor = asyncHandler(
 );
 
 export const rejectInstructor = asyncHandler(
-  async (req: Request, res: Response) => {
+  async (req: CustomRequest, res: Response) => {
     const { id } = req.params;
 
-    const user = await User.findOne({ _id: id });
+    const user = await User.findById(id);
     if (!user) {
-      throw new CustomError(http.BAD_REQUEST, 'Không tìm thấy người dùng');
-    }
-
-    if (user.role === 'instructor') {
-      throw new CustomError(
-        http.BAD_REQUEST,
-        'Không thể từ chối vì người này đã là giảng viên',
-      );
+      throw new CustomError(http.NOT_FOUND, 'Không tìm thấy người dùng');
     }
 
     if (!user.isInstructorActive) {
       throw new CustomError(
         http.BAD_REQUEST,
-        'Người dùng này chưa gửi yêu cầu làm giảng viên',
+        'Người dùng này chưa gửi yêu cầu làm giảng viên hoặc đã bị từ chối trước đó'
       );
     }
 
-    // Reset trạng thái yêu cầu
     user.isInstructorActive = false;
     await user.save();
 
-    res
-      .status(http.OK)
-      .json({ msg: 'Yêu cầu làm giảng viên đã bị từ chối' });
-  },
+    res.status(http.OK).json({ msg: 'Yêu cầu làm giảng viên đã bị từ chối' });
+  }
 );
 
 // Lấy danh sách người dùng yêu cầu
