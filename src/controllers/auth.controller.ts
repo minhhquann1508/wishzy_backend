@@ -120,3 +120,4 @@ export const forgotPassword = asyncHandler(
     res.status(http.OK).json({ msg: 'Email lấy lại mật khẩu đã được gửi.' });
   },
 );
+
