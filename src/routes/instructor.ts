@@ -14,7 +14,7 @@ const router = express.Router();
 router
   // Admin lấy danh sách yêu cầu
   .get(
-    '/requests',
+    '/request-instructor',
     verifyToken,
     checkPermission('admin'),
     getInstructorRequests,

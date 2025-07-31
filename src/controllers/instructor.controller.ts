@@ -54,16 +54,9 @@ export const rejectInstructor = asyncHandler(
   async (req: CustomRequest, res: Response) => {
     const { id } = req.params;
 
-    const user = await User.findById(id);
+    const user = await User.findOne({ _id: id, role: 'instructor' });
     if (!user) {
       throw new CustomError(http.NOT_FOUND, 'Không tìm thấy người dùng');
-    }
-
-    if (!user.isInstructorActive) {
-      throw new CustomError(
-        http.BAD_REQUEST,
-        'Người dùng này chưa gửi yêu cầu làm giảng viên hoặc đã bị từ chối trước đó',
-      );
     }
 
     user.isInstructorActive = false;
@@ -80,8 +73,8 @@ export const getInstructorRequests = asyncHandler(
     const skip = (Number(page) - 1) * Number(limit);
 
     const filter = {
-      role: 'user',
-      isInstructorActive: true,
+      role: 'instructor',
+      isInstructorActive: false,
     };
 
     const [requests, total] = await Promise.all([
