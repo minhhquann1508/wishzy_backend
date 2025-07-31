@@ -5,6 +5,10 @@ import http from 'http-status-codes';
 
 export interface AppError extends Error {
   status?: number;
+  code?: number;
+  keyValue: {
+    [key: string]: string;
+  };
 }
 
 export const notFound = async (
@@ -21,11 +25,18 @@ export const errorHandler = (
 ) => {
   if (err instanceof CustomError) {
     res.status(Number(err.statusCode)).json({ msg: err.message });
-  } else if (err) {
+  } else if (err.code === 11000) {
+    const duplicatedField = Object.entries(err.keyValue)
+      .map(([key, value]) => `${key}: ${value}`)
+      .join(', ');
+
+    res.status(http.BAD_REQUEST).json({
+      msg: `Giá trị đã tồn tại: (${duplicatedField})`,
+    });
   } else {
     console.error(err);
     res.status(http.INTERNAL_SERVER_ERROR).json({
-      msg: err || 'Lỗi phía server',
+      msg: err.message || 'Lỗi phía server',
     });
   }
 };
