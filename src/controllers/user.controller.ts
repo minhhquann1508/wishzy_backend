@@ -105,7 +105,8 @@ export const updateUserData = asyncHandler(
     res.status(http.OK).json({ msg: 'Cập nhật thành công', user: updatedUser });
   },
 );
-// ======================= REQUEST 
+
+// Instructor
 // gửi lên yêu cầu
 export const requestInstructor = asyncHandler(
   async (req: CustomRequest, res: Response) => {
@@ -124,7 +125,10 @@ export const requestInstructor = asyncHandler(
     }
 
     if (foundUser.isInstructorActive) {
-      throw new CustomError(http.BAD_REQUEST, 'Yêu cầu của bạn đang chờ xét duyệt');
+      throw new CustomError(
+        http.BAD_REQUEST,
+        'Yêu cầu của bạn đang chờ xét duyệt',
+      );
     }
 
     foundUser.isInstructorActive = true;
@@ -133,7 +137,7 @@ export const requestInstructor = asyncHandler(
     res.status(http.OK).json({
       msg: 'Yêu cầu làm giảng viên đã được gửi thành công',
     });
-  }
+  },
 );
 
 export const approveInstructor = asyncHandler(
@@ -163,7 +167,7 @@ export const rejectInstructor = asyncHandler(
     if (!user.isInstructorActive) {
       throw new CustomError(
         http.BAD_REQUEST,
-        'Người dùng này chưa gửi yêu cầu làm giảng viên hoặc đã bị từ chối trước đó'
+        'Người dùng này chưa gửi yêu cầu làm giảng viên hoặc đã bị từ chối trước đó',
       );
     }
 
@@ -171,7 +175,7 @@ export const rejectInstructor = asyncHandler(
     await user.save();
 
     res.status(http.OK).json({ msg: 'Yêu cầu làm giảng viên đã bị từ chối' });
-  }
+  },
 );
 
 // Lấy danh sách người dùng yêu cầu
@@ -203,11 +207,10 @@ export const getInstructorRequests = asyncHandler(
         totalItems: total,
       },
     });
-  }
+  },
 );
-// người dùng đổi mật khẩu
 
-// ======== Thống Kê người dùng và yêu cầu 
+// ======== Thống Kê người dùng và yêu cầu
 export const getUserStats = asyncHandler(
   async (req: Request, res: Response) => {
     const { fromDate, toDate } = req.query;
@@ -224,7 +227,12 @@ export const getUserStats = asyncHandler(
       }
     }
 
-    const [totalUsers, totalInstructors, totalPendingRequests, usersCreatedInRange] = await Promise.all([
+    const [
+      totalUsers,
+      totalInstructors,
+      totalPendingRequests,
+      usersCreatedInRange,
+    ] = await Promise.all([
       User.countDocuments(),
       User.countDocuments({ role: 'instructor' }),
       User.countDocuments({ role: 'user', isInstructorActive: true }),
@@ -243,6 +251,5 @@ export const getUserStats = asyncHandler(
         usersCreatedInRange,
       },
     });
-  }
+  },
 );
-
