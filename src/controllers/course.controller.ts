@@ -126,12 +126,73 @@ export const getAllCourseByUser = asyncHandler(
       ]),
     ];
 
+    const sortOrder = Number(req.query.orderDate) === 1 ? 1 : -1;
+
     const [courses, totalResult] = await Promise.all([
-      Course.aggregate([...basePipeline, { $skip: skip }, { $limit: limit }]),
+      Course.aggregate([
+        ...basePipeline,
+        { $sort: { createdAt: sortOrder } },
+        { $skip: skip },
+        { $limit: limit },
+      ]),
       Course.aggregate([...basePipeline, { $count: 'total' }]),
     ]);
 
     const totalCourses = totalResult[0]?.total || 0;
+
+    res.status(http.OK).json({
+      msg: 'Lấy danh sách khóa học thành công',
+      courses,
+      pagination: {
+        currentPage: page,
+        totalPages: Math.ceil(totalCourses / limit),
+        pageSizes: limit,
+        totalItems: totalCourses,
+      },
+    });
+  },
+);
+
+// Lấy ra danh sách khóa học của giảng viên
+export const getInstructorCourse = asyncHandler(
+  async (req: CustomRequest, res: Response) => {
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || CONST.pageLimit;
+    const skip = (page - 1) * limit;
+    const { user } = req;
+    const queries: any = { createdBy: user?.id };
+
+    if (!user)
+      throw new CustomError(http.BAD_REQUEST, 'Không tìm thấy người dùng');
+
+    if (req.query.courseName) {
+      queries.courseName = { $regex: req.query.courseName, $options: 'i' };
+    }
+
+    if (req.query.status) {
+      queries.status = Boolean(req.query.status);
+    }
+
+    const sortOrder = Number(req.query.orderDate) === 1 ? 1 : -1;
+
+    const [courses, totalCourses] = await Promise.all([
+      Course.find(queries)
+        .populate('createdBy', 'fullName email avatar')
+        .populate({
+          path: 'subject',
+          match: { status: true },
+          select: 'subjectName slug',
+          populate: {
+            path: 'grade',
+            select: 'gradeName',
+            match: { status: true },
+          },
+        })
+        .sort({ createdAt: sortOrder })
+        .skip(skip)
+        .limit(limit),
+      Course.countDocuments(queries),
+    ]);
 
     res.status(http.OK).json({
       msg: 'Lấy danh sách khóa học thành công',
