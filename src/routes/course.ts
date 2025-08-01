@@ -3,6 +3,7 @@ import {
   createNewCourse,
   getAllCourseByUser,
   getDetailCourseBySlug,
+  getHotCourse,
   getInstructorCourse,
 } from '../controllers/course.controller';
 import { verifyToken } from '../middlewares/verifyToken';
@@ -17,6 +18,7 @@ router
     [verifyToken, checkPermission('instructor')],
     getInstructorCourse,
   )
+  .get('/hot-course', getHotCourse)
   .get('/:slug', getDetailCourseBySlug)
   .post(
     '/',

@@ -206,3 +206,71 @@ export const getInstructorCourse = asyncHandler(
     });
   },
 );
+
+// Lấy danh sách khóa học - admin
+export const getAllCourseByAdmin = asyncHandler(
+  async (req: Request, res: Response) => {},
+);
+
+// Lấy khóa học hot
+export const getHotCourse = asyncHandler(
+  async (req: Request, res: Response) => {
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || CONST.pageLimit;
+    const skip = (page - 1) * limit;
+
+    const basePipeline = [
+      { $match: { status: true } },
+      useLookup('subjects', 'subject', 'subject'),
+      { $unwind: '$subject' },
+      { $match: { 'subject.status': true } },
+      // Tìm theo biến grade và lọc nó theo grade nào có hiện hoặc ẩn
+      useLookup('grades', 'subject.grade', 'grade'),
+      { $unwind: '$grade' },
+      { $match: { 'grade.status': true } },
+      // Tìm theo biến user
+      useLookup('users', 'createdBy', 'createdBy'),
+      { $unwind: '$createdBy' },
+      useProjectStage([
+        'courseName',
+        'price',
+        'thumbnail',
+        'status',
+        'level',
+        'numberOfStudents',
+        'totalDuration',
+        'rating',
+        'sale',
+        'subject.subjectName',
+        'subject.slug',
+        'grade.gradeName',
+        'createdBy.fullName',
+        'createdBy.email',
+        'createdBy.avatar',
+      ]),
+    ];
+
+    const [courses, totalResult] = await Promise.all([
+      Course.aggregate([
+        ...basePipeline,
+        { $sort: { numberOfStudents: -1 } },
+        { $skip: skip },
+        { $limit: limit },
+      ]),
+      Course.aggregate([...basePipeline, { $count: 'total' }]),
+    ]);
+
+    const totalCourses = totalResult[0]?.total || 0;
+
+    res.status(http.OK).json({
+      msg: 'Lấy danh sách khóa học hot thành công',
+      courses,
+      pagination: {
+        currentPage: page,
+        totalPages: Math.ceil(totalCourses / limit),
+        pageSizes: limit,
+        totalItems: totalCourses,
+      },
+    });
+  },
+);
