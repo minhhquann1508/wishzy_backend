@@ -15,7 +15,7 @@ export const useRoute = (app: Application) => {
   app.use('/api/course', courseRoute);
   app.use('/api/instructor', instuctorRoute);
   app.use('/api/feedback', feedbackRoute);
-  app.use('/api/banner', bannerRoute);
+  app.use('/api/banner', bannerRoute); 
   app.use('/api/upload', uploadRoute);
 
 };
