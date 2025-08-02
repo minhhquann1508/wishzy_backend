@@ -35,6 +35,7 @@ export const requestInstructor = asyncHandler(
   },
 );
 
+// duyệt yêu cầu
 export const approveInstructor = asyncHandler(
   async (req: Request, res: Response) => {
     const { id } = req.params;
@@ -50,6 +51,7 @@ export const approveInstructor = asyncHandler(
   },
 );
 
+// không chấp nhận
 export const rejectInstructor = asyncHandler(
   async (req: CustomRequest, res: Response) => {
     const { id } = req.params;
@@ -96,4 +98,58 @@ export const getInstructorRequests = asyncHandler(
       },
     });
   },
+);
+
+// Lấy danh sách người dùng giảng viên
+export const getAllInstructors = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { page = 1, limit = CONST.pageLimit } = req.query;
+    const skip = (Number(page) - 1) * Number(limit);
+
+    const [instructors, total] = await Promise.all([
+      User.find({ role: 'instructor' })
+        .select('email fullName avatar role age')
+        .skip(skip)
+        .limit(Number(limit)),
+      User.countDocuments({ role: 'instructor' }),
+    ]);
+
+    res.status(http.OK).json({
+      msg: 'Lấy danh sách giảng viên',
+      instructors,
+      pagination: {
+        currentPage: Number(page),
+        totalPages: Math.ceil(total / Number(limit)),
+        pageSizes: Number(limit),
+        totalItems: total,
+      },
+    });
+  },
+);
+
+// Lấy chi tiết người dùng giảng viên
+export const getInstructorDetail = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const user = await User.findOne({ _id: id, role: 'instructor' });
+    if (!user) {
+      throw new CustomError(http.NOT_FOUND, 'Không tìm thấy giảng viên');
+    }
+    res.status(http.OK).json({ instructor: user });
+  }
+);
+
+// Hú yêu cầu làm giảng viên
+export const cancelInstructorRequest = asyncHandler(
+  async (req: CustomRequest, res: Response) => {
+    const { id } = req.params;
+    const user = await User.findById(id);
+    if (!user || user.role !== 'instructor' || user.isInstructorActive) {
+      throw new CustomError(http.BAD_REQUEST, 'Không thể huỷ yêu cầu');
+    }
+    user.role = 'user';
+    user.isInstructorActive = false;
+    await user.save();
+    res.status(http.OK).json({ msg: 'Đã huỷ yêu cầu làm giảng viên' });
+  }
 );
