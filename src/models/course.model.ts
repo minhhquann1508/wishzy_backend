@@ -26,7 +26,7 @@ const SaleSchema = new mongoose.Schema(
   { _id: false },
 );
 
-const CourseSchema = new mongoose.Schema(
+export const CourseSchema = new mongoose.Schema(
   {
     courseName: {
       type: String,

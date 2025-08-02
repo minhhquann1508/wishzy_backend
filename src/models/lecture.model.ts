@@ -33,11 +33,28 @@ const LectureSchema = new mongoose.Schema(
 
 LectureSchema.pre('save', async function () {
   if (!this.isModified('lectureName')) return;
-  this.slug = slugify(this.lectureName, {
+
+  const baseSlug = slugify(this.lectureName, {
     replacement: '-',
     lower: true,
     strict: true,
   });
+
+  let slug = baseSlug;
+  let count = 1;
+
+  while (
+    await Lecture.exists({
+      slug,
+      _id: { $ne: this._id },
+      chapter: this.chapter,
+    })
+  ) {
+    slug = `${baseSlug}-${count}`;
+    count++;
+  }
+
+  this.slug = slug;
 });
 
 const Lecture = mongoose.model('Lecture', LectureSchema);

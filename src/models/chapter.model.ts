@@ -32,12 +32,29 @@ const ChapterSchema = new mongoose.Schema(
 );
 
 ChapterSchema.pre('save', async function () {
-  if (!this.isModified('chapterName')) return;
-  this.slug = slugify(this.chapterName, {
-    replacement: '-',
-    lower: true,
-    strict: true,
-  });
+  if (this.isModified('chapterName')) {
+    const baseSlug = slugify(this.chapterName, {
+      replacement: '-',
+      lower: true,
+      strict: true,
+    });
+
+    let slug = baseSlug;
+    let count = 1;
+
+    while (
+      await Chapter.exists({
+        slug,
+        _id: { $ne: this._id },
+        course: this.course,
+      })
+    ) {
+      slug = `${baseSlug}-${count}`;
+      count++;
+    }
+
+    this.slug = slug;
+  }
 });
 
 const Chapter = mongoose.model('Chapter', ChapterSchema);

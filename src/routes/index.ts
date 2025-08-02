@@ -5,6 +5,8 @@ import subjectRoute from './subject';
 import courseRoute from './course';
 import instuctorRoute from './instructor';
 import uploadRoute from './upload';
+import chapterRoute from './chapter';
+import lectureRoute from './lecture';
 
 export const useRoute = (app: Application) => {
   app.use('/api/auth', authRoute);
@@ -13,4 +15,6 @@ export const useRoute = (app: Application) => {
   app.use('/api/course', courseRoute);
   app.use('/api/instructor', instuctorRoute);
   app.use('/api/upload', uploadRoute);
+  app.use('/api/chapter', chapterRoute);
+  app.use('/api/lecture', lectureRoute);
 };
