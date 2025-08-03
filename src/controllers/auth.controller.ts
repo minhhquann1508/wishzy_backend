@@ -33,7 +33,10 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
   const user = await User.findOne({ email }).lean();
   if (!user) throw new CustomError(http.BAD_REQUEST, 'Tài khoản không tồn tại');
 
-  const isPasswordCorrect = comparePassword(password, user.password as string);
+  const isPasswordCorrect = await comparePassword(
+    password,
+    user.password as string,
+  );
   if (!isPasswordCorrect)
     throw new CustomError(
       http.BAD_REQUEST,
@@ -120,4 +123,3 @@ export const forgotPassword = asyncHandler(
     res.status(http.OK).json({ msg: 'Email lấy lại mật khẩu đã được gửi.' });
   },
 );
-
