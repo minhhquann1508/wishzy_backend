@@ -107,25 +107,41 @@ export const getAllCourseByUser = asyncHandler(
       // Tìm theo biến user
       useLookup('users', 'createdBy', 'createdBy'),
       { $unwind: '$createdBy' },
-      useProjectStage([
-        'courseName',
-        'price',
-        'thumbnail',
-        'status',
-        'level',
-        'numberOfStudents',
-        'totalDuration',
-        'rating',
-        'sale',
-        'createdAt',
-        'slug',
-        'subject.subjectName',
-        'subject.slug',
-        'grade.gradeName',
-        'createdBy.fullName',
-        'createdBy.email',
-        'createdBy.avatar',
-      ]),
+      {
+        $project: {
+          _id: 1,
+          courseName: 1,
+          price: 1,
+          thumbnail: 1,
+          status: 1,
+          level: 1,
+          numberOfStudents: 1,
+          totalDuration: 1,
+          rating: 1,
+          averageRating: { $ifNull: ['$rating', 0] },
+          sale: 1,
+          createdAt: 1,
+          updatedAt: 1,
+          slug: 1,
+          __v: 1,
+          requirements: 1,
+          subject: {
+            _id: '$subject._id',
+            subjectName: '$subject.subjectName',
+            slug: '$subject.slug',
+            grade: {
+              _id: '$grade._id',
+              gradeName: '$grade.gradeName'
+            }
+          },
+          createdBy: {
+            _id: '$createdBy._id',
+            fullName: '$createdBy.fullName',
+            email: '$createdBy.email',
+            avatar: '$createdBy.avatar'
+          }
+        }
+      }
     ];
 
     const sortOrder = Number(req.query.orderDate) === 1 ? 1 : -1;
