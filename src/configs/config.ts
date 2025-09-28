@@ -11,6 +11,12 @@ interface Config {
   cloudinaryName: string;
   cloudinaryKey: string;
   cloudinarySecret: string;
+  BUNNY_URL: string;
+  BUNNY_API_KEY: string;
+  MONGO_TEMP_USER: string;
+  MONGO_TEMP_PASSWORD: string;
+  MONGO_DB_COMPASS: string;
+  MONGO_CLOUD_URL: string;
 }
 
 const config: Config = {
@@ -22,6 +28,12 @@ const config: Config = {
   cloudinaryName: process.env.CLOUDINARY_NAME as string,
   cloudinaryKey: process.env.CLOUDINARY_KEY as string,
   cloudinarySecret: process.env.CLOUDINARY_SECRET as string,
+  BUNNY_URL: process.env.BUNNY_URL as string,
+  BUNNY_API_KEY: process.env.BUNNY_API_KEY as string,
+  MONGO_TEMP_USER: process.env.MONGO_TEMP_USER as string,
+  MONGO_TEMP_PASSWORD: process.env.MONGO_TEMP_PASSWORD as string,
+  MONGO_DB_COMPASS: process.env.MONGO_DB_COMPASS as string,
+  MONGO_CLOUD_URL: process.env.MONGO_CLOUD_URL as string,
 };
 
 export default config;

@@ -20,7 +20,7 @@ export const createNewSubject = asyncHandler(
     if (!subjectName || !grade)
       throw new CustomError(http.BAD_REQUEST, 'Vui lòng điền đủ thông tin');
 
-    const gradeData = await Grade.findById(grade).select('gradeName');
+    const gradeData = await Grade.findOne({ _id: grade, status: true }).select('gradeName');
 
     const subject = await Subject.create({
       subjectName: `${subjectName} - ${gradeData?.gradeName}`,
