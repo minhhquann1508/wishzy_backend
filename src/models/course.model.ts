@@ -61,7 +61,6 @@ export const CourseSchema = new mongoose.Schema(
       enum: ['beginner', 'intermediate', 'advanced'],
       default: 'beginner',
     },
-    requirements: [String],
     totalDuration: {
       type: Number,
       default: 0,
