@@ -7,6 +7,12 @@ const OrderSchema = new mongoose.Schema(
       ref: 'User',
       required: true,
     },
+    txnRef: {
+      type: String,
+      required: true,
+      unique: true,
+      index: true,
+    },
     voucher: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
@@ -25,6 +31,14 @@ const OrderSchema = new mongoose.Schema(
       type: String,
       enum: ['processing', 'completed', 'cancelled'],
       default: 'processing',
+    },
+    provider: {
+      type: String,
+      default: 'vnpay',
+    },
+    providerMeta: {
+      type: Object,
+      default: {},
     },
   },
   { timestamps: true },
