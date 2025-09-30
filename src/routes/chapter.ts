@@ -17,7 +17,7 @@ router
     [verifyToken, checkPermission('instructor')],
     updateChapterBySlug,
   )
-  .post('/', verifyToken, checkPermission('instructor'), createNewChapter)
+  .post('/', verifyToken, checkPermission('admin', 'instructor'), createNewChapter)
   .delete(
     '/chapterSlug',
     verifyToken,
