@@ -9,6 +9,8 @@ import bannerRoute from './banner';
 import uploadRoute from './upload';
 import chapterRoute from './chapter';
 import lectureRoute from './lecture';
+import paymentRoute from './payment';
+import enrollmentRoute from './enrollment';
 
 export const useRoute = (app: Application) => {
   app.use('/api/auth', authRoute);
@@ -21,4 +23,6 @@ export const useRoute = (app: Application) => {
   app.use('/api/upload', uploadRoute);
   app.use('/api/chapter', chapterRoute);
   app.use('/api/lecture', lectureRoute);
+  app.use('/api/payment', paymentRoute);
+  app.use('/api/enrollment', enrollmentRoute);
 };
