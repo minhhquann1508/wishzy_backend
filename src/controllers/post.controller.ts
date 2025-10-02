@@ -45,23 +45,18 @@ export const getDetailPost = asyncHandler(
     if (!slug)
       throw new CustomError(http.BAD_REQUEST, 'Không tìm thấy slug bài viết');
 
-    const allowedCategoryDocs = await PostCategory.find({
-      status: false,
-    }).select('_id');
-    const allowedCategoryIds = allowedCategoryDocs.map((cat) => cat._id);
-
     const post = await Post.findOne({
       slug,
-      status: true,
-      category: { $in: allowedCategoryIds },
-    });
+    }).populate('category', 'categoryName')
+      .populate('createdBy', 'fullName');
 
     if (!post)
-      throw new CustomError(http.BAD_REQUEST, 'Không tìm thấy bài viết');
+      throw new CustomError(http.NOT_FOUND, 'Không tìm thấy bài viết');
 
     res.status(http.OK).json({ msg: 'Lấy bài viết thành công', post });
   },
 );
+
 
 export const getAllPosts = asyncHandler(async (req: Request, res: Response) => {
   const { page = 1, limit = CONST.pageLimit } = req.query;
@@ -160,11 +155,11 @@ export const updatePost = asyncHandler(
   async (req: CustomRequest, res: Response) => {
     const { user } = req;
     const { slug } = req.params;
-    const { title, category, description } = req.body;
+    const { title, category, description, status, isFeatured, content, slug: newSlug } = req.body; 
 
-    if (!title || !category || !status || !description)
+    if (!title || !category || !newSlug || status === undefined)
       throw new CustomError(
-        http.UNAUTHORIZED,
+        http.BAD_REQUEST,
         'Vui lòng nhập đầy đủ các trường',
       );
 
@@ -174,11 +169,17 @@ export const updatePost = asyncHandler(
 
     const post = await Post.findOne({ slug, createdBy: user.id });
     if (!post)
-      throw new CustomError(http.BAD_REQUEST, 'Không tìm thấy khóa học');
+      throw new CustomError(http.BAD_REQUEST, 'Không tìm thấy bài viết');
 
     post.title = title;
     post.category = category;
     post.description = description;
+    post.content = content;
+    post.isFeatured = isFeatured;
+    post.status = status;
+    post.slug = newSlug;
+    if (req.body.thumbnail) post.thumbnail = req.body.thumbnail;
+
     await post.save();
 
     const updatedPost = await Post.findById(post._id)
@@ -190,6 +191,7 @@ export const updatePost = asyncHandler(
       .json({ msg: 'Chỉnh sửa thành công', post: updatedPost });
   },
 );
+
 
 export const deletePost = asyncHandler(
   async (req: CustomRequest, res: Response) => {
