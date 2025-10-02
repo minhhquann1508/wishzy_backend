@@ -29,7 +29,7 @@ export const createNewPostCategory = asyncHandler(
 
     const postCategory = await PostCategory.create({
       categoryName,
-      createdBy: user,
+      createdBy: user.id,
     });
 
     res.status(http.CREATED).json({ msg: 'Tạo mới thành công', postCategory });
@@ -103,21 +103,43 @@ export const getAllPostCategory = asyncHandler(
 export const updatePostCategory = asyncHandler(
   async (req: Request, res: Response) => {
     const { slug } = req.params;
-    const { categoryName } = req.body;
-    if (!slug) throw new CustomError(http.BAD_REQUEST, 'Không tìm thấy slug');
+    const { categoryName, status } = req.body;
 
-    if (!categoryName)
-      throw new CustomError(http.BAD_REQUEST, 'Vui lòng nhập dữ liệu');
+    if (!slug) throw new CustomError(http.BAD_REQUEST, "Không tìm thấy slug");
 
     const postCategory = await PostCategory.findOne({ slug });
     if (!postCategory)
-      throw new CustomError(http.BAD_REQUEST, 'Không tìm thấy dữ liệu');
+      throw new CustomError(http.BAD_REQUEST, "Không tìm thấy dữ liệu");
 
-    postCategory.categoryName = categoryName;
+    if (categoryName !== undefined) postCategory.categoryName = categoryName;
+    if (status !== undefined) postCategory.status = status;
+
     await postCategory.save();
 
-    res.status(http.OK).json({ msg: 'Cập nhật thành công', postCategory });
-  },
+    res.status(http.OK).json({ msg: "Cập nhật thành công", postCategory });
+  }
+);
+
+export const updateStatusPostCategory = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { slug } = req.params;
+    const { status } = req.body;
+
+    if (!slug) throw new CustomError(http.BAD_REQUEST, "Không tìm thấy slug");
+    if (status === undefined)
+      throw new CustomError(http.BAD_REQUEST, "Vui lòng nhập trạng thái");
+
+    const postCategory = await PostCategory.findOneAndUpdate(
+      { slug },
+      { status },
+      { new: true }
+    );
+
+    if (!postCategory)
+      throw new CustomError(http.BAD_REQUEST, "Không tìm thấy danh mục");
+
+    res.status(http.OK).json({ msg: "Cập nhật trạng thái thành công", postCategory });
+  }
 );
 
 export const deletePostCategory = asyncHandler(

@@ -5,7 +5,7 @@ import {
   getBannerDetail,
   updateBanner,
   deleteBanner,
-  getCourseBannersOnly, // ✅ thêm controller mới
+  getCourseBannersOnly, 
 } from '../controllers/banner.controller';
 import { verifyToken } from '../middlewares/verifyToken';
 import { checkPermission } from '../middlewares/checkRole';
