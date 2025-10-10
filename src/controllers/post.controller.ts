@@ -19,7 +19,7 @@ interface Queries {
 export const createNewPost = asyncHandler(
   async (req: CustomRequest, res: Response) => {
     const { user } = req;
-    const { title, content, category } = req.body;
+    const { title, content, category, slug } = req.body;
 
     if (!title || !content || !category)
       throw new CustomError(http.BAD_REQUEST, 'Vui lòng nhập đủ thông tin');
@@ -27,17 +27,29 @@ export const createNewPost = asyncHandler(
     if (!user)
       throw new CustomError(http.UNAUTHORIZED, 'Không tìm thấy người dùng');
 
+    let finalSlug = slug || title.trim().toLowerCase().replace(/\s+/g, '-');
+    let exists = await Post.findOne({ slug: finalSlug });
+    let counter = 1;
+
+    while (exists) {
+      finalSlug = `${slug || title.trim().toLowerCase().replace(/\s+/g, '-')}-${counter}`;
+      exists = await Post.findOne({ slug: finalSlug });
+      counter++;
+    }
+
     const post = await Post.create({
       ...req.body,
       title,
       content,
       category,
+      slug: finalSlug,
       createdBy: user.id,
     });
 
     res.status(http.CREATED).json({ msg: 'Tạo bài viết thành công', post });
   },
 );
+
 
 export const getDetailPost = asyncHandler(
   async (req: Request, res: Response) => {
@@ -155,7 +167,15 @@ export const updatePost = asyncHandler(
   async (req: CustomRequest, res: Response) => {
     const { user } = req;
     const { slug } = req.params;
-    const { title, category, description, status, isFeatured, content, slug: newSlug } = req.body; 
+    const { 
+      title, 
+      category, 
+      description, 
+      status, 
+      isFeatured, 
+      content, 
+      slug: newSlug 
+    } = req.body; 
 
     if (!title || !category || !newSlug || status === undefined)
       throw new CustomError(
@@ -171,13 +191,24 @@ export const updatePost = asyncHandler(
     if (!post)
       throw new CustomError(http.BAD_REQUEST, 'Không tìm thấy bài viết');
 
+    let finalSlug = newSlug.trim().toLowerCase().replace(/\s+/g, '-');
+    let exists = await Post.findOne({ slug: finalSlug, _id: { $ne: post._id } });
+    let counter = 1;
+
+    while (exists) {
+      finalSlug = `${newSlug.trim().toLowerCase().replace(/\s+/g, '-')}-${counter}`;
+      exists = await Post.findOne({ slug: finalSlug, _id: { $ne: post._id } });
+      counter++;
+    }
+
+    // Cập nhật dữ liệu
     post.title = title;
     post.category = category;
     post.description = description;
     post.content = content;
     post.isFeatured = isFeatured;
     post.status = status;
-    post.slug = newSlug;
+    post.slug = finalSlug;
     if (req.body.thumbnail) post.thumbnail = req.body.thumbnail;
 
     await post.save();
@@ -191,7 +222,6 @@ export const updatePost = asyncHandler(
       .json({ msg: 'Chỉnh sửa thành công', post: updatedPost });
   },
 );
-
 
 export const deletePost = asyncHandler(
   async (req: CustomRequest, res: Response) => {
