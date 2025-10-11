@@ -8,30 +8,58 @@ import { CustomRequest } from '../types/request';
 
 export const createPayment = async (req: CustomRequest, res: Response) => {
   try {
-    const { courseId, courseSlug, orderInfo } = req.body as { courseId?: string; courseSlug?: string; orderInfo?: string };
-    if (!courseId && !courseSlug) return res.status(400).json({ success: false, error: 'Thiếu courseId hoặc courseSlug' });
+    const { courseId, courseIds, courseSlug, orderInfo } = req.body as { courseId?: string; courseIds?: string[]; courseSlug?: string; orderInfo?: string };
+    if (!courseId && !courseSlug && (!courseIds || courseIds.length === 0)) {
+      return res.status(400).json({ success: false, error: 'Thiếu courseIds hoặc courseId/courseSlug' });
+    }
     if (!req.user?.id) return res.status(401).json({ success: false, error: 'Bạn chưa đăng nhập' });
 
-    const course = courseId
-      ? await Course.findById(courseId)
-      : await Course.findOne({ slug: courseSlug });
-    if (!course) return res.status(404).json({ success: false, error: 'Khóa học không tồn tại' });
-
-    // Tính giá sau khuyến mãi (nếu hợp lệ trong thời gian)
-    let finalPrice = course.price;
-    const now = new Date();
-    if (
-      course.sale &&
-      course.sale.value &&
-      ((course.sale.saleStartDate && course.sale.saleStartDate <= now) || !course.sale.saleStartDate) &&
-      ((course.sale.saleEndDate && course.sale.saleEndDate >= now) || !course.sale.saleEndDate)
-    ) {
-      if (course.sale.saleType === 'percent') {
-        finalPrice = Math.max(0, Math.round(course.price * (1 - course.sale.value / 100)));
-      } else if (course.sale.saleType === 'fixed') {
-        finalPrice = Math.max(0, course.price - course.sale.value);
+    // Build course list
+    let courses: Array<typeof Course.prototype> = [] as any;
+    if (Array.isArray(courseIds) && courseIds.length > 0) {
+      // Dedupe incoming ids
+      const uniqIds = Array.from(new Set(courseIds));
+      courses = await Course.find({ _id: { $in: uniqIds } });
+      if (courses.length === 0) {
+        return res.status(404).json({ success: false, error: 'Không tìm thấy khóa học nào hợp lệ' });
       }
+    } else {
+      const single = courseId
+        ? await Course.findById(courseId)
+        : await Course.findOne({ slug: courseSlug });
+      if (!single) return res.status(404).json({ success: false, error: 'Khóa học không tồn tại' });
+      courses = [single];
     }
+
+    // Lọc bỏ khóa học đã sở hữu (Enrollment)
+    const allCourseIds = courses.map(c => c._id);
+    const owned = await Enrollment.find({ user: req.user.id, course: { $in: allCourseIds } }).select('course');
+    const ownedSet = new Set(owned.map(e => String(e.course)));
+    const filteredCourses = courses.filter(c => !ownedSet.has(String(c._id)));
+    const excludedCourseIds = courses.filter(c => ownedSet.has(String(c._id))).map(c => String(c._id));
+
+    if (filteredCourses.length === 0) {
+      return res.status(400).json({ success: false, error: 'Bạn đã sở hữu tất cả các khóa học đã chọn', excludedCourseIds });
+    }
+
+    // Tính giá sau khuyến mãi cho từng khóa (theo server, tránh lệch giá với client)
+    const now = new Date();
+    const priceOf = (c: any) => {
+      let p = c.price;
+      if (
+        c.sale &&
+        c.sale.value &&
+        ((c.sale.saleStartDate && c.sale.saleStartDate <= now) || !c.sale.saleStartDate) &&
+        ((c.sale.saleEndDate && c.sale.saleEndDate >= now) || !c.sale.saleEndDate)
+      ) {
+        if (c.sale.saleType === 'percent') p = Math.max(0, Math.round(c.price * (1 - c.sale.value / 100)));
+        else if (c.sale.saleType === 'fixed') p = Math.max(0, c.price - c.sale.value);
+      }
+      return p;
+    };
+
+    const finalPrices = filteredCourses.map(c => priceOf(c));
+    const totalAmount = finalPrices.reduce((s, v) => s + v, 0);
 
     const txnRef = `ORDER_${Date.now()}_${req.user.id}`;  // Mã giao dịch unique
 
@@ -39,28 +67,37 @@ export const createPayment = async (req: CustomRequest, res: Response) => {
     const order = await Order.create({
       user: req.user.id,
       txnRef,
-      totalAmount: finalPrice,
+      totalAmount,
       paymentMethod: 'vnpay',
       status: 'processing',
       provider: 'vnpay',
     });
 
-    await OrderDetail.create({
-      order: order._id,
-      course: course._id,
-      coursePrice: finalPrice,
-    });
+    // Tạo nhiều order detail cho từng khóa
+    await Promise.all(
+      filteredCourses.map((c, idx) =>
+        OrderDetail.create({
+          order: order._id,
+          course: c._id,
+          coursePrice: finalPrices[idx],
+        })
+      )
+    );
+
+    const firstName = filteredCourses[0].courseName;
+    const extraCount = filteredCourses.length - 1;
+    const composedInfo = extraCount > 0 ? `${firstName} +${extraCount} khóa khác` : firstName;
 
     const paymentUrl = vnpay.buildPaymentUrl({
-      vnp_Amount: finalPrice * 100,  // VNPay yêu cầu x100
+      vnp_Amount: totalAmount * 100,  // VNPay yêu cầu x100
       vnp_IpAddr: (req.ip as string) || (req.connection as any)?.remoteAddress || '127.0.0.1',
       vnp_ReturnUrl: process.env.VNP_RETURN_URL!,
       vnp_TxnRef: txnRef,
-      vnp_OrderInfo: orderInfo || `Thanh toán khóa học: ${course.courseName}`,
+      vnp_OrderInfo: orderInfo || `Thanh toán khóa học: ${composedInfo}`,
       vnp_BankCode: 'NCB',  // optional
     });
     
-    return res.json({ success: true, paymentUrl, orderId: order._id, txnRef });
+    return res.json({ success: true, paymentUrl, orderId: order._id, txnRef, excludedCourseIds });
   } catch (error) {
     console.error('Lỗi tạo payment:', error);
     return res.status(500).json({ success: false, error: 'Lỗi tạo thanh toán' });
@@ -93,12 +130,10 @@ export const ipnHandler = async (req: Request, res: Response) => {
       order.status = 'completed';
       await order.save();
 
-      const detail = await OrderDetail.findOne({ order: order._id });
-      if (detail) {
-        const courseId = detail.course as any;
-        const userId = order.user as any;
-
-        // Enroll user nếu chưa có
+      const details = await OrderDetail.find({ order: order._id });
+      const userId = order.user as any;
+      for (const d of details) {
+        const courseId = d.course as any;
         const existingEnroll = await Enrollment.findOne({ user: userId, course: courseId });
         if (!existingEnroll) {
           await Enrollment.create({ user: userId, course: courseId });
