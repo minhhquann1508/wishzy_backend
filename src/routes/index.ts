@@ -12,6 +12,9 @@ import lectureRoute from './lecture';
 import paymentRoute from './payment';
 import enrollmentRoute from './enrollment';
 import examRoute from './exam';
+import userRouter from './user';  
+import postCategoryRouter from './post-category';
+import postRouter from './post';
 
 export const useRoute = (app: Application) => {
   app.use('/api/auth', authRoute);
@@ -27,4 +30,7 @@ export const useRoute = (app: Application) => {
   app.use('/api/payment', paymentRoute);
   app.use('/api/enrollment', enrollmentRoute);
   app.use('/api/exams', examRoute);
+  app.use('/api/user', userRouter);
+  app.use('/api/post-category', postCategoryRouter);
+  app.use('/api/post', postRouter);
 };
