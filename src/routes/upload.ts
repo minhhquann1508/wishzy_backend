@@ -8,7 +8,7 @@ const router = expess.Router();
 
 router
   .post('/image', upload.single('image'), uploadImageUrl)
-  .post('/video', upload.single('file'), uploadVideo);
+  .post('/video', upload.single('video'), uploadVideo);
   
 
 export default router;
