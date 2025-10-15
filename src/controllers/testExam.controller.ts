@@ -6,7 +6,7 @@ const sampleExam = {
   questions: [
     { question: '1 + 1 = ?', options: ['A) 1', 'B) 2', 'C) 3', 'D) 0'],isMultiple: true, answer: 'B' },
     { question: '3 - 1 = ?', options: ['A) 2', 'B) 4', 'C) 1', 'D) 3'], isMultiple: true, answer: 'A' },
-    { question: 'Số nào lớn hơn 5?', options: ['A) 4', 'B) 6', 'C) 5', 'D) 3'], answer: 'B' },
+    { question: 'Số nào lớn hơn 10?', options: ['A) 4', 'B) 6', 'C) 5', 'D) 3'],isMultiple: true, answer: 'C' },
     { question: '2 + 2 = ?', options: ['A) 3', 'B) 5', 'C) 4', 'D) 6'], answer: 'C' },
     { question: '5 - 2 = ?', options: ['A) 3', 'B) 2', 'C) 4', 'D) 1'], answer: 'A' },
   ],
@@ -54,14 +54,20 @@ function inferIsMultipleFromAnswer(ans: unknown): boolean {
   return false;
 }
 
+export const getAllExams = async (req: Request, res: Response) => {
+  try {
+    const exams = await TestExam.find();
+    res.json(exams);
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
+  }
+};
+
 // API 1: Lấy câu hỏi (GET /api/exam/questions/:examId) - Không trả đáp án
 export const getQuestions = async (req: Request, res: Response) => {
   try {
     let exam = await TestExam.findById(req.params.examId);
-    if (!exam) {
-      exam = new TestExam({ ...sampleExam, courseId: req.query.courseId || 'default' });
-      await exam.save();
-    }
+    if (!exam) return res.status(404).json({ error: 'Không tìm thấy đề' });
     // Trả về chỉ question + options + isMultiple (không trả đáp án)
     const questions = exam.questions.map(q => ({
       question: q.question,
@@ -78,10 +84,7 @@ export const getQuestionsByCourse = async (req: Request, res: Response) => {
   try {
     const courseId = String(req.query.courseId || 'default');
     let exam = await TestExam.findOne({ courseId });
-    if (!exam) {
-      exam = new TestExam({ ...sampleExam, courseId });
-      await exam.save();
-    }
+    if (!exam) return res.status(404).json({ error: 'Không tìm thấy đề cho courseId này' });
     const questions = exam.questions.map(q => ({
       question: q.question,
       options: q.options,
