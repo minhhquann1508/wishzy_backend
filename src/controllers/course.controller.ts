@@ -100,19 +100,20 @@ export const getAllCourseByUser = asyncHandler(
       useLookup('subjects', 'subject', 'subject'),
       { $unwind: '$subject' },
       { $match: { 'subject.status': true } },
-      // Tìm theo biến grade và lọc nó theo grade nào có hiện hoặc ẩn
+      // // Tìm theo biến grade và lọc nó theo grade nào có hiện hoặc ẩn
       useLookup('grades', 'subject.grade', 'grade'),
       { $unwind: '$grade' },
       { $match: { 'grade.status': true } },
-      // Tìm theo biến user
+      // // Tìm theo biến user
       useLookup('users', 'createdBy', 'createdBy'),
       { $unwind: '$createdBy' },
       {
         $project: {
           _id: 1,
-          courseName: 1,
+          courseName: 1,  
           price: 1,
           thumbnail: 1,
+          description: 1,
           status: 1,
           level: 1,
           numberOfStudents: 1,

@@ -61,9 +61,7 @@ export const getUserProfile = asyncHandler(
     const { user } = req;
     if (!user)
       throw new CustomError(http.BAD_REQUEST, 'Không thể truy cập thông tin');
-    const userData = await User.findById(user.id).select(
-      'email avatar fullName age phone role',
-    );
+    const userData = await User.findById(user.id).select('-password');
 
     if (!userData)
       throw new CustomError(http.BAD_REQUEST, 'Không tìm thấy người dùng');
@@ -77,12 +75,12 @@ export const getUserProfile = asyncHandler(
 export const updateUserData = asyncHandler(
   async (req: CustomRequest, res: Response) => {
     const { user } = req;
-    const { fullName, phone, age, password } = req.body;
+    const { fullName, phone, dob, gender } = req.body;
 
-    if (!fullName || !phone || !age || !password)
+    if (!fullName )
       throw new CustomError(
         http.BAD_REQUEST,
-        'Vui lòng nhập đủ các trường bắt buộc',
+        'Vui lòng nhập đầy đủ họ và tên người dùng',
       );
 
     if (!user)
@@ -96,8 +94,8 @@ export const updateUserData = asyncHandler(
       {
         fullName,
         phone,
-        age,
-        password,
+        dob,
+        gender,
       },
       { new: true },
     );
@@ -105,3 +103,70 @@ export const updateUserData = asyncHandler(
     res.status(http.OK).json({ msg: 'Cập nhật thành công', user: updatedUser });
   },
 );
+
+// ================== TẠO USER ==================
+export const createUser = asyncHandler(async (req: Request, res: Response) => {
+  const { email, fullName, password, age, phone } = req.body;
+
+  if (!email || !fullName || !password) {
+    throw new CustomError(http.BAD_REQUEST, 'Vui lòng nhập đầy đủ thông tin bắt buộc');
+  }
+
+  const existingUser = await User.findOne({ email });
+  if (existingUser) {
+    throw new CustomError(http.BAD_REQUEST, 'Email đã tồn tại');
+  }
+
+  const user = await User.create({
+    email,
+    fullName,
+    password,
+    age,
+    phone,
+    role: 'user', 
+  });
+
+  res.status(http.CREATED).json({
+    msg: 'Tạo người dùng thành công',
+    user: {
+      _id: user._id,
+      email: user.email,
+      fullName: user.fullName,
+      role: user.role,
+    },
+  });
+});
+
+// ================== CẬP NHẬT USER ==================
+export const updateUserById = asyncHandler(async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const { fullName, phone, age, role, address, gender, dob } = req.body;
+
+  const user = await User.findById(id);
+  if (!user) throw new CustomError(http.NOT_FOUND, 'Không tìm thấy người dùng');
+
+  user.fullName = fullName || user.fullName;
+  user.phone = phone || user.phone;
+  user.age = age || user.age;
+  user.role = role || user.role;
+  user.address = address || user.address; 
+  user.gender = gender || user.gender;
+  user.dob = dob || user.dob;
+
+
+  await user.save();
+
+  res.status(http.OK).json({ msg: 'Cập nhật thành công', user });
+});
+
+// ================== XÓA USER ==================
+export const deleteUserById = asyncHandler(async (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  const user = await User.findById(id);
+  if (!user) throw new CustomError(http.NOT_FOUND, 'Không tìm thấy người dùng');
+
+  await user.deleteOne();
+
+  res.status(http.OK).json({ msg: 'Xóa người dùng thành công' });
+});

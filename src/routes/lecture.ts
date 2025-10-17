@@ -5,6 +5,6 @@ import { checkPermission } from '../middlewares/checkRole';
 
 const router = express.Router();
 
-router.post('/', verifyToken, checkPermission('instructor'), createNewLecture);
+router.post('/', [verifyToken, checkPermission('instructor', 'admin')], createNewLecture);
 
 export default router;
