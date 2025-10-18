@@ -89,12 +89,12 @@ export const createPayment = async (req: CustomRequest, res: Response) => {
     const composedInfo = extraCount > 0 ? `${firstName} +${extraCount} khóa khác` : firstName;
 
     const paymentUrl = vnpay.buildPaymentUrl({
-      vnp_Amount: totalAmount * 100,  // VNPay yêu cầu x100
+      vnp_Amount: totalAmount,
       vnp_IpAddr: (req.ip as string) || (req.connection as any)?.remoteAddress || '127.0.0.1',
       vnp_ReturnUrl: process.env.VNP_RETURN_URL!,
       vnp_TxnRef: txnRef,
       vnp_OrderInfo: orderInfo || `Thanh toán khóa học: ${composedInfo}`,
-      vnp_BankCode: 'NCB',  // optional
+      vnp_BankCode: 'NCB',
     });
     
     return res.json({ success: true, paymentUrl, orderId: order._id, txnRef, excludedCourseIds });

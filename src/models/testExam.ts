@@ -4,6 +4,7 @@ export interface IQuestion {
   question: string;
   options: string[];
   answer: string; 
+  isMultiple?: boolean;
 }
 
 export interface IExam extends Document {
@@ -19,6 +20,7 @@ const examSchema: Schema = new Schema({
     question: { type: String, required: true },
     options: { type: [String], required: true },
     answer: { type: String, required: true },
+    isMultiple: { type: Boolean, default: false },
   }],
 });
 
