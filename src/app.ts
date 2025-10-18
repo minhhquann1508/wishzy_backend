@@ -4,6 +4,7 @@ import cors from 'cors';
 import { errorHandler, notFound } from './middlewares/errorHandler';
 import { connectDb } from './configs/db';
 import { useRoute } from './routes';
+import { setupSwagger } from './configs/swagger';
 
 const app = express();
 
@@ -13,6 +14,9 @@ app.use(cookieParser());
 app.use(cors());
 
 connectDb();
+
+// Setup Swagger documentation
+setupSwagger(app);
 
 useRoute(app);
 
