@@ -29,11 +29,11 @@ const router = express.Router();
  *                   type: string
  *                   example: Khởi tạo bài thi thành công
  */
-router.get('/initialize', initializeExam);
-router.get('/questions/:examId', getQuestions); // API lấy câu hỏi theo examId
-router.get('/questions', getQuestionsByCourse); // API lấy câu hỏi theo courseId (query)
-router.post('/submit',submitAndGrade); // API submit và chấm điểm
-router.get('/all', getAllExams); // API lấy tất cả đề
+// router.get('/initialize', initializeExam);
+// router.get('/questions/:examId', getQuestions); // API lấy câu hỏi theo examId
+// router.get('/questions', getQuestionsByCourse); // API lấy câu hỏi theo courseId (query)
+// router.post('/submit',submitAndGrade); // API submit và chấm điểm
+// router.get('/all', getAllExams); // API lấy tất cả đề
 /**
  * @swagger
  * /api/exams/questions/{examId}:
@@ -79,6 +79,7 @@ router.get('/all', getAllExams); // API lấy tất cả đề
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
+router.get('/getAllExams', getAllExams);
 router.get('/questions/:examId', getQuestions);
 /**
  * @swagger
