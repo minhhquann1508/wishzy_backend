@@ -7,6 +7,14 @@ import { CustomError } from '../errors/error';
 import { CONST } from '../utils/constant';
 import { CustomRequest } from '../types/request';
 
+interface QueriesType {
+  fullName?: { $regex: string; $options: string };
+  email?: { $regex: string; $options: string };
+  role?: string;
+  isInstructorActive?: boolean;
+  verified?: boolean;
+}
+
 // gửi lên yêu cầu
 export const requestInstructor = asyncHandler(
   async (req: CustomRequest, res: Response) => {
@@ -68,23 +76,32 @@ export const rejectInstructor = asyncHandler(
   },
 );
 
-// Lấy danh sách người dùng yêu cầu
+// Lấy danh sách người dùng yêu cầu 
 export const getInstructorRequests = asyncHandler(
   async (req: Request, res: Response) => {
     const { page = 1, limit = CONST.pageLimit } = req.query;
     const skip = (Number(page) - 1) * Number(limit);
 
-    const filter = {
+    const queries: QueriesType = {
       role: 'instructor',
       isInstructorActive: false,
+      verified: true,
     };
 
+    if (req.query.fullName) {
+      queries.fullName = { $regex: String(req.query.fullName), $options: 'i' };
+    }
+
+    if (req.query.email) {
+      queries.email = { $regex: String(req.query.email), $options: 'i' };
+    }
+
     const [requests, total] = await Promise.all([
-      User.find(filter)
-        .select('email fullName avatar role age')
+      User.find(queries)
+        .select('email fullName avatar role dob requestedAt')
         .skip(skip)
         .limit(Number(limit)),
-      User.countDocuments(filter),
+      User.countDocuments(queries),
     ]);
 
     res.status(http.OK).json({
@@ -106,12 +123,26 @@ export const getAllInstructors = asyncHandler(
     const { page = 1, limit = CONST.pageLimit } = req.query;
     const skip = (Number(page) - 1) * Number(limit);
 
-    const [instructors, total] = await Promise.all([
-      User.find({ role: 'instructor' })
-        .select('email fullName avatar role age')
+    const queries: QueriesType = { role: 'instructor' };
+
+    if (req.query.fullName) {
+      queries.fullName = { $regex: String(req.query.fullName), $options: 'i' };
+    }
+
+    if (req.query.email) {
+      queries.email = { $regex: String(req.query.email), $options: 'i' };
+    }
+
+    if (req.query.isInstructorActive) {
+      queries.isInstructorActive = Boolean(req.query.isInstructorActive);
+    }
+
+    const [instructors, totalInstructors] = await Promise.all([
+      User.find(queries)
+        .select('email fullName avatar role dob createdAt')
         .skip(skip)
         .limit(Number(limit)),
-      User.countDocuments({ role: 'instructor' }),
+      User.countDocuments(queries),
     ]);
 
     res.status(http.OK).json({
@@ -119,9 +150,9 @@ export const getAllInstructors = asyncHandler(
       instructors,
       pagination: {
         currentPage: Number(page),
-        totalPages: Math.ceil(total / Number(limit)),
+        totalPages: Math.ceil(totalInstructors / Number(limit)),
         pageSizes: Number(limit),
-        totalItems: total,
+        totalItems: Number(totalInstructors),
       },
     });
   },
@@ -139,7 +170,7 @@ export const getInstructorDetail = asyncHandler(
   }
 );
 
-// Hú yêu cầu làm giảng viên
+// Hủy yêu cầu làm giảng viên
 export const cancelInstructorRequest = asyncHandler(
   async (req: CustomRequest, res: Response) => {
     const { id } = req.params;

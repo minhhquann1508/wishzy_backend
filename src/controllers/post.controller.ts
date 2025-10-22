@@ -96,6 +96,7 @@ export const getAllPosts = asyncHandler(async (req: Request, res: Response) => {
     Post.find(queries)
       .populate('createdBy', 'fullName')
       .populate('category', 'categoryName')
+      .sort({ createdAt: -1 })
       .skip(skip)
       .limit(Number(limit)),
     Post.countDocuments(queries),
