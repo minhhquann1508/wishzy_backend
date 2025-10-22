@@ -15,7 +15,7 @@ const OrderSchema = new mongoose.Schema(
     },
     voucher: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
+      ref: 'Voucher',
       default: null,
     },
     totalAmount: {
@@ -23,7 +23,7 @@ const OrderSchema = new mongoose.Schema(
       required: true,
     },
     paymentMethod: {
-      type: String,
+      type: String, 
       enum: ['zalopay', 'vnpay'],
       required: true,
     },
