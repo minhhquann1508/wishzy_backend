@@ -25,7 +25,7 @@ export const uploadImageUrl = asyncHandler(
 );
 
 export const uploadVideo = asyncHandler(async (req: CustomRequest, res: Response) => {
-  const libraryId = '498424';
+  const libraryId = config.BUNNY_LIBRARY_ID;
   const file = req.file;
 
   if (!file)
