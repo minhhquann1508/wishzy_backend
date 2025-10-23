@@ -30,9 +30,7 @@ export const createNewLecture = asyncHandler(
     const lecture = await Lecture.create({
       ...req.body,
       lectureName,
-      videoUrl: '',
       chapter: chapter._id,
-      duration: '30000',
     });
 
     res

@@ -22,7 +22,7 @@ export const createNewChapter = asyncHandler(
     const course = await Course.findOne({
       slug: courseSlug,
       createdBy: user.id,
-    });
+    }); 
     if (!course)
       throw new CustomError(
         http.BAD_REQUEST,
