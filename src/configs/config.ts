@@ -17,6 +17,7 @@ interface Config {
   MONGO_TEMP_PASSWORD: string;
   MONGO_DB_COMPASS: string;
   MONGO_CLOUD_URL: string;
+  BUNNY_LIBRARY_ID: string;
 }
 
 const config: Config = {
@@ -34,6 +35,7 @@ const config: Config = {
   MONGO_TEMP_PASSWORD: process.env.MONGO_TEMP_PASSWORD as string,
   MONGO_DB_COMPASS: process.env.MONGO_DB_COMPASS as string,
   MONGO_CLOUD_URL: process.env.MONGO_CLOUD_URL as string,
+  BUNNY_LIBRARY_ID: process.env.BUNNY_LIBRARY_ID as string,
 };
 
 export default config;

@@ -1,9 +1,11 @@
 import express from 'express';
 import {
   getAllUser,
-  getUserProfile,
+  getAllStudents,
   updateUserData,
   createUser,
+  getUserById,
+  getUserProfile,
   updateUserById,
   deleteUserById,
 } from '../controllers/user.controller';
@@ -173,6 +175,55 @@ router.delete('/:id', verifyToken, checkPermission('admin'), deleteUserById);
 router.get('/', verifyToken, checkPermission('admin'), getAllUser);
 /**
  * @swagger
+ * /api/user/students:
+  *   get:
+  *   summary: Get all students (Admin only)
+  *   tags: [Users]
+  *   security:
+  *     - bearerAuth: []
+  *     - cookieAuth: []
+  *   responses:
+  *     200:
+  *       description: List of students
+  *     401:
+  *       description: Unauthorized
+  *       content:
+  *         application/json:
+  *           schema:
+  *             $ref: '#/components/schemas/Error'
+  */
+router.get('/students', verifyToken, checkPermission('admin'), getAllStudents);
+/**
+ * @swagger
+ * /api/user/{id}:
+ *   get:
+ *     summary: Get user by ID (Admin only)
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: User ID
+ *     responses:
+ *       200:
+ *         description: User retrieved successfully
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+router.get('/:id', verifyToken, checkPermission('instructor', 'admin', 'staff'), getUserById);
+
+
+/**
+ * @swagger
  * /api/user/profile:
  *   get:
  *     summary: Get current user profile
@@ -199,6 +250,7 @@ router.get('/', verifyToken, checkPermission('admin'), getAllUser);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
+
 router.get('/profile', verifyToken, getUserProfile);
 /**
  * @swagger
@@ -231,7 +283,7 @@ router.get('/profile', verifyToken, getUserProfile);
  *         description: Unauthorized
  *         content:
  *           application/json:
- *             schema:
+ *             schema:  
  *               $ref: '#/components/schemas/Error'
  */
 router.put('/update', verifyToken, updateUserData);
